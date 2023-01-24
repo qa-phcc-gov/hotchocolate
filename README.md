@@ -54,6 +54,9 @@ Examples of things built on top of the ChilliCream GraphQL Platform that are ope
 
 [Become a code contributor](CONTRIBUTING.md) and help us make the ChilliCream GraphQL platform even better!
 
+## Co Authord By: [M.F.M Fazrin](https://github.com/nirzaf)
+
+
 ## From our community
 
 [Check out](COMMUNITY.md) what members of our awesome community have made!
