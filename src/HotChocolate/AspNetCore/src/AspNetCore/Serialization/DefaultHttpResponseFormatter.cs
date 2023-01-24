@@ -5,8 +5,13 @@ using System.Text.Encodings.Web;
 using System.Text.Json;
 using HotChocolate.Execution.Serialization;
 using Microsoft.AspNetCore.Http;
+#if !NET6_0_OR_GREATER
+using Microsoft.Net.Http.Headers;
+#endif
 using static HotChocolate.AspNetCore.AcceptMediaTypeKind;
 using static HotChocolate.Execution.ExecutionResultKind;
+using static HotChocolate.WellKnownContextData;
+using HttpStatusCode = System.Net.HttpStatusCode;
 
 namespace HotChocolate.AspNetCore.Serialization;
 
@@ -37,10 +42,21 @@ public class DefaultHttpResponseFormatter : IHttpResponseFormatter
     public DefaultHttpResponseFormatter(
         bool indented = false,
         JavaScriptEncoder? encoder = null)
+        : this(new JsonResultFormatterOptions { Indented = indented, Encoder = encoder })
     {
-        _jsonFormatter = new JsonResultFormatter(indented, encoder);
+    }
+
+    /// <summary>
+    /// Creates a new instance of <see cref="DefaultHttpResponseFormatter" />.
+    /// </summary>
+    /// <param name="options">
+    /// The JSON result formatter options
+    /// </param>
+    public DefaultHttpResponseFormatter(JsonResultFormatterOptions options)
+    {
+        _jsonFormatter = new JsonResultFormatter(options);
         _multiPartFormatter = new MultiPartResultFormatter(_jsonFormatter);
-        _eventStreamResultFormatter = new EventStreamResultFormatter(indented, encoder);
+        _eventStreamResultFormatter = new EventStreamResultFormatter(options);
     }
 
     public GraphQLRequestFlags CreateRequestFlags(
@@ -119,6 +135,17 @@ public class DefaultHttpResponseFormatter : IHttpResponseFormatter
             response.ContentType = format.ContentType;
             response.StatusCode = statusCode;
 
+            if (result.ContextData is not null &&
+                result.ContextData.TryGetValue(CacheControlHeaderValue, out var value) &&
+                value is string cacheControlHeaderValue)
+            {
+#if NET6_0_OR_GREATER
+                response.Headers.CacheControl = cacheControlHeaderValue;
+#else
+                response.Headers.Add(HeaderNames.CacheControl, cacheControlHeaderValue);
+#endif
+            }
+
             await format.Formatter.FormatAsync(result, response.Body, cancellationToken);
         }
         else if (result.Kind is DeferredResult or BatchResult or SubscriptionResult)
@@ -180,20 +207,27 @@ public class DefaultHttpResponseFormatter : IHttpResponseFormatter
                 var contextData = result.ContextData;
 
                 // first we check if there is an explicit HTTP status code override by the user.
-                if (contextData.TryGetValue(WellKnownContextData.HttpStatusCode, out var value) &&
-                    value is HttpStatusCode statusCode)
+                if (contextData.TryGetValue(WellKnownContextData.HttpStatusCode, out var value))
                 {
-                    return statusCode;
+                    if (value is HttpStatusCode statusCode)
+                    {
+                        return statusCode;
+                    }
+
+                    if (value is int statusCodeInt)
+                    {
+                        return (HttpStatusCode)statusCodeInt;
+                    }
                 }
 
                 // next we check if the validation of the request failed.
                 // if that is the case we will we will return a BadRequest status code (400).
-                if (contextData.ContainsKey(WellKnownContextData.ValidationErrors))
+                if (contextData.ContainsKey(ValidationErrors))
                 {
                     return HttpStatusCode.BadRequest;
                 }
 
-                if (result.ContextData.ContainsKey(WellKnownContextData.OperationNotAllowed))
+                if (result.ContextData.ContainsKey(OperationNotAllowed))
                 {
                     return HttpStatusCode.MethodNotAllowed;
                 }
@@ -250,15 +284,15 @@ public class DefaultHttpResponseFormatter : IHttpResponseFormatter
         formatInfo = default;
 
         // if the request does not specify the accept header then we will
-        // use the `application/json` response content-type,
-        // which is the legacy behavior.
+        // use the `application/graphql-response+json` response content-type,
+        // which is the new response content-type.
         if (acceptMediaTypes.Length == 0)
         {
             if (result.Kind is SingleResult)
             {
                 formatInfo = new FormatInfo(
-                    ContentType.Json,
-                    ResponseContentType.Json,
+                    ContentType.GraphQLResponse,
+                    ResponseContentType.GraphQLResponse,
                     _jsonFormatter);
                 return true;
             }
@@ -301,7 +335,7 @@ public class DefaultHttpResponseFormatter : IHttpResponseFormatter
             var mediaType = acceptMediaTypes[0];
 
             if (resultKind is ResultKind.Single &&
-                mediaType.Kind is ApplicationGraphQL or AllApplication)
+                mediaType.Kind is ApplicationGraphQL or AllApplication or All)
             {
                 formatInfo = new FormatInfo(
                     ContentType.GraphQLResponse,
@@ -311,7 +345,7 @@ public class DefaultHttpResponseFormatter : IHttpResponseFormatter
             }
 
             if (resultKind is ResultKind.Single &&
-                mediaType.Kind is ApplicationJson or All)
+                mediaType.Kind is ApplicationJson)
             {
                 formatInfo = new FormatInfo(
                     ContentType.Json,
@@ -352,7 +386,7 @@ public class DefaultHttpResponseFormatter : IHttpResponseFormatter
             var mediaType = Unsafe.Add(ref searchSpace, i);
 
             if (resultKind is ResultKind.Single &&
-                mediaType.Kind is ApplicationGraphQL or AllApplication)
+                mediaType.Kind is ApplicationGraphQL or AllApplication or All)
             {
                 formatInfo = new FormatInfo(
                     ContentType.GraphQLResponse,
@@ -362,7 +396,7 @@ public class DefaultHttpResponseFormatter : IHttpResponseFormatter
             }
 
             if (resultKind is ResultKind.Single &&
-                mediaType.Kind is ApplicationJson or All)
+                mediaType.Kind is ApplicationJson)
             {
                 // application/json is a legacy response content-type.
                 // We will create a formatInfo but keep on validating for

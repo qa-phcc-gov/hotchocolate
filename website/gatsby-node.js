@@ -2,8 +2,9 @@ const { createFilePath } = require("gatsby-source-filesystem");
 const path = require("path");
 const git = require("simple-git/promise");
 
+/** @type import('gatsby').GatsbyNode["createPages"] */
 exports.createPages = async ({ actions, graphql, reporter }) => {
-  const { createPage, createRedirect } = actions;
+  const { createPage } = actions;
 
   const result = await graphql(`
     {
@@ -58,117 +59,6 @@ exports.createPages = async ({ actions, graphql, reporter }) => {
   const products = result.data.productsConfig.products;
 
   createDocPages(createPage, result.data.docs, products);
-
-  createRedirect({
-    fromPath: "/blog/2019/03/18/entity-framework",
-    toPath: "/blog/2020/03/18/entity-framework",
-    redirectInBrowser: true,
-    isPermanent: true,
-  });
-  createRedirect({
-    fromPath: "/docs/",
-    toPath: "/docs/hotchocolate/",
-    redirectInBrowser: true,
-    isPermanent: true,
-  });
-  createRedirect({
-    fromPath: "/docs/marshmallowpie/",
-    toPath: "/docs/hotchocolate/",
-    redirectInBrowser: true,
-    isPermanent: true,
-  });
-
-  // Banana Cake Pop
-  createRedirect({
-    fromPath: "/banana-cake-pop",
-    toPath: "/products/bananacakepop",
-    redirectInBrowser: true,
-    isPermanent: true,
-  });
-  createRedirect({
-    fromPath: "/banana-cake-pop/",
-    toPath: "/products/bananacakepop",
-    redirectInBrowser: true,
-    isPermanent: true,
-  });
-
-  // Products
-  createRedirect({
-    fromPath: "/products",
-    toPath: "/",
-    redirectInBrowser: true,
-    isPermanent: true,
-  });
-  createRedirect({
-    fromPath: "/products/",
-    toPath: "/",
-    redirectInBrowser: true,
-    isPermanent: true,
-  });
-
-  // company
-  createRedirect({
-    fromPath: "/company",
-    toPath: "/",
-    redirectInBrowser: true,
-    isPermanent: true,
-  });
-  createRedirect({
-    fromPath: "/company/",
-    toPath: "/",
-    redirectInBrowser: true,
-    isPermanent: true,
-  });
-
-  // images
-  createRedirect({
-    fromPath: "/img/projects/greendonut-banner.svg",
-    toPath: "/resources/greendonut-banner.svg",
-    redirectInBrowser: true,
-    isPermanent: true,
-  });
-  createRedirect({
-    fromPath: "/img/projects/greendonut-signet.png",
-    toPath: "/resources/greendonut-signet.png",
-    redirectInBrowser: true,
-    isPermanent: true,
-  });
-  createRedirect({
-    fromPath: "/img/projects/hotchocolate-banner.svg",
-    toPath: "/resources/hotchocolate-banner.svg",
-    redirectInBrowser: true,
-    isPermanent: true,
-  });
-  createRedirect({
-    fromPath: "/img/projects/hotchocolate-signet.png",
-    toPath: "/resources/hotchocolate-signet.png",
-    redirectInBrowser: true,
-    isPermanent: true,
-  });
-  createRedirect({
-    fromPath: "/img/projects/react-rasta-banner.svg",
-    toPath: "/resources/react-rasta-banner.svg",
-    redirectInBrowser: true,
-    isPermanent: true,
-  });
-  createRedirect({
-    fromPath: "/img/projects/react-rasta-signet.png",
-    toPath: "/resources/react-rasta-signet.png",
-    redirectInBrowser: true,
-    isPermanent: true,
-  });
-  createRedirect({
-    fromPath: "/img/projects/strawberryshake-banner.svg",
-    toPath: "/resources/strawberryshake-banner.svg",
-    redirectInBrowser: true,
-    isPermanent: true,
-  });
-  createRedirect({
-    fromPath: "/img/projects/strawberryshake-signet.png",
-    toPath: "/resources/strawberryshake-signet.png",
-    redirectInBrowser: true,
-    isPermanent: true,
-  });
 };
 
 exports.onCreateNode = async ({ node, actions, getNode, reporter }) => {

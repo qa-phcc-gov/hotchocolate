@@ -2,12 +2,13 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using System.Runtime.InteropServices;
 
 #nullable enable
 
 namespace HotChocolate.Types;
 
-public class FieldCollection<T> : IFieldCollection<T> where T : class, IField
+public sealed class FieldCollection<T> : IFieldCollection<T> where T : class, IField
 {
     private readonly Dictionary<string, T> _fieldsLookup;
     private readonly T[] _fields;
@@ -58,6 +59,13 @@ public class FieldCollection<T> : IFieldCollection<T> where T : class, IField
 
     internal ReadOnlySpan<T> AsSpan() => _fields;
 
+    internal ref T GetReference()
+#if NET6_0_OR_GREATER
+        => ref MemoryMarshal.GetArrayDataReference(_fields);
+#else
+        => ref MemoryMarshal.GetReference(_fields.AsSpan());
+#endif
+
     public IEnumerator<T> GetEnumerator()
         => _fields.Length == 0
             ? EmptyFieldEnumerator.Instance
@@ -79,7 +87,7 @@ public class FieldCollection<T> : IFieldCollection<T> where T : class, IField
 
         public T Current { get; private set; } = default!;
 
-        object? IEnumerator.Current => Current;
+        object IEnumerator.Current => Current;
 
         public bool MoveNext()
         {

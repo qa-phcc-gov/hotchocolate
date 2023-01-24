@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using HotChocolate.Internal;
 using HotChocolate.Properties;
 using HotChocolate.Types;
 using HotChocolate.Types.Descriptors;
@@ -13,21 +12,21 @@ namespace HotChocolate.Configuration;
 
 internal sealed class TypeDiscoverer
 {
-    private readonly List<ITypeReference> _unregistered = new();
+    private readonly List<TypeReference> _unregistered = new();
     private readonly List<ISchemaError> _errors = new();
-    private readonly List<ITypeReference> _resolved = new();
+    private readonly List<TypeReference> _resolved = new();
     private readonly IDescriptorContext _context;
     private readonly TypeRegistry _typeRegistry;
     private readonly TypeRegistrar _typeRegistrar;
     private readonly ITypeRegistrarHandler[] _handlers;
-    private readonly ITypeInterceptor _interceptor;
+    private readonly TypeInterceptor _interceptor;
 
     public TypeDiscoverer(
         IDescriptorContext context,
         TypeRegistry typeRegistry,
         TypeLookup typeLookup,
-        IEnumerable<ITypeReference> initialTypes,
-        ITypeInterceptor interceptor,
+        IEnumerable<TypeReference> initialTypes,
+        TypeInterceptor interceptor,
         bool includeSystemTypes = true)
     {
         if (context is null)
@@ -75,7 +74,8 @@ internal sealed class TypeDiscoverer
             new SchemaTypeReferenceHandler(),
             new SyntaxTypeReferenceHandler(context.TypeInspector),
             new FactoryTypeReferenceHandler(context),
-            new DependantFactoryTypeReferenceHandler(context)
+            new DependantFactoryTypeReferenceHandler(context),
+            new ExtendedTypeDirectiveReferenceHandler(context.TypeInspector)
         };
 
         _interceptor = interceptor;
@@ -84,7 +84,7 @@ internal sealed class TypeDiscoverer
     public IReadOnlyList<ISchemaError> DiscoverTypes()
     {
         const int max = 1000;
-        var processed = new HashSet<ITypeReference>();
+        var processed = new HashSet<TypeReference>();
 
 DISCOVER:
         var tries = 0;
@@ -145,7 +145,11 @@ DISCOVER:
         {
             foreach (var typeRef in _unregistered)
             {
-                _handlers[(int)typeRef.Kind].Handle(_typeRegistrar, typeRef);
+                var index = (int)typeRef.Kind;
+                if (_handlers.Length > index)
+                {
+                    _handlers[index].Handle(_typeRegistrar, typeRef);
+                }
             }
 
             _unregistered.Clear();
@@ -157,9 +161,9 @@ DISCOVER:
     {
         var inferred = false;
 
-        foreach (var typeRef in _typeRegistrar.Unresolved)
+        foreach (var unresolvedTypeRef in _typeRegistrar.Unresolved)
         {
-            if (typeRef is ExtendedTypeReference unresolvedTypeRef &&
+            if (unresolvedTypeRef is ExtendedTypeReference or ExtendedTypeDirectiveReference &&
                 _context.TryInferSchemaType(unresolvedTypeRef, out var schemaTypeRefs))
             {
                 inferred = true;
@@ -167,7 +171,11 @@ DISCOVER:
                 foreach (var schemaTypeRef in schemaTypeRefs)
                 {
                     _unregistered.Add(schemaTypeRef);
-                    _typeRegistry.TryRegister(unresolvedTypeRef, schemaTypeRef);
+
+                    if (unresolvedTypeRef is ExtendedTypeReference typeRef)
+                    {
+                        _typeRegistry.TryRegister(typeRef, schemaTypeRef);
+                    }
                 }
 
                 _resolved.Add(unresolvedTypeRef);
@@ -202,7 +210,7 @@ DISCOVER:
             foreach (var unresolvedReference in _typeRegistrar.Unresolved)
             {
                 var types = _typeRegistry.Types.Where(
-                    t => t.Dependencies.Select(d => d.TypeReference)
+                    t => t.Dependencies.Select(d => d.Type)
                         .Any(r => r.Equals(unresolvedReference))).ToList();
 
                 var builder =

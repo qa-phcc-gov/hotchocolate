@@ -5,6 +5,7 @@ using HotChocolate.Language;
 using HotChocolate.Types.Descriptors;
 using HotChocolate.Types.Descriptors.Definitions;
 using HotChocolate.Utilities;
+using static HotChocolate.WellKnownContextData;
 
 #nullable enable
 
@@ -45,12 +46,13 @@ internal sealed class QueryFieldTypeInterceptor : TypeInterceptor
         {
             var options = _context.DescriptorContext.GetMutationPayloadOptions();
 
-            ITypeReference queryType = TypeReference.Parse($"{_queryType.Name}!");
+            TypeReference queryType = TypeReference.Parse($"{_queryType.Name}!");
 
             _queryField= new ObjectFieldDefinition(
                 options.QueryFieldName ?? _defaultFieldName,
                 type: queryType,
                 resolver: ctx => new(ctx.GetQueryRoot<object>()));
+            _queryField.CustomSettings.Add(MutationQueryField);
 
             foreach (var field in _mutationDefinition.Fields)
             {
@@ -67,8 +69,7 @@ internal sealed class QueryFieldTypeInterceptor : TypeInterceptor
 
     public override void OnBeforeCompleteType(
         ITypeCompletionContext completionContext,
-        DefinitionBase? definition,
-        IDictionary<string, object?> contextData)
+        DefinitionBase definition)
     {
         if (completionContext.Type is ObjectType objectType &&
             definition is ObjectTypeDefinition objectTypeDef &&

@@ -22,7 +22,7 @@ internal class ConnectionType
 {
     internal ConnectionType(
         string connectionName,
-        ITypeReference nodeType,
+        TypeReference nodeType,
         bool withTotalCount)
     {
         if (nodeType is null)
@@ -60,7 +60,7 @@ internal class ConnectionType
                 Definition,
                 ApplyConfigurationOn.BeforeNaming,
                 nodeType,
-                TypeDependencyKind.Named));
+                TypeDependencyFulfilled.Named));
         Definition.Configurations.Add(
             new CompleteConfiguration(
                 (c, _) => EdgeType = c.GetType<IEdgeType>(TypeReference.Create(edgeTypeName)),
@@ -68,7 +68,7 @@ internal class ConnectionType
                 ApplyConfigurationOn.BeforeCompletion));
     }
 
-    internal ConnectionType(ITypeReference nodeType, bool withTotalCount)
+    internal ConnectionType(TypeReference nodeType, bool withTotalCount)
     {
         if (nodeType is null)
         {
@@ -112,7 +112,7 @@ internal class ConnectionType
                 Definition,
                 ApplyConfigurationOn.BeforeNaming,
                 nodeType,
-                TypeDependencyKind.Named));
+                TypeDependencyFulfilled.Named));
         Definition.Configurations.Add(
             new CompleteConfiguration(
                 (c, _) =>
@@ -137,18 +137,17 @@ internal class ConnectionType
 
     protected override void OnBeforeRegisterDependencies(
         ITypeDiscoveryContext context,
-        DefinitionBase definition,
-        IDictionary<string, object?> contextData)
+        DefinitionBase definition)
     {
         context.Dependencies.Add(new(
             context.TypeInspector.GetOutputTypeRef(typeof(PageInfoType))));
 
-        base.OnBeforeRegisterDependencies(context, definition, contextData);
+        base.OnBeforeRegisterDependencies(context, definition);
     }
 
     private static ObjectTypeDefinition CreateTypeDefinition(
         bool withTotalCount,
-        ITypeReference? edgesType = null)
+        TypeReference? edgesType = null)
     {
         var definition = new ObjectTypeDefinition
         {

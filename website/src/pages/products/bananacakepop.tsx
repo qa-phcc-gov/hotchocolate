@@ -1,3 +1,4 @@
+import { SrOnly } from "@/components/misc/sr-only";
 import { OutboundLink } from "gatsby-plugin-google-analytics";
 import React, {
   FC,
@@ -9,18 +10,17 @@ import React, {
 } from "react";
 import styled, { css } from "styled-components";
 import { parse } from "yaml";
-import { BananaCakePop } from "../../components/images/banana-cake-pop";
-import { Layout } from "../../components/layout";
-import { Link } from "../../components/misc/link";
-import { Intro } from "../../components/misc/page-elements";
-import { SEO } from "../../components/misc/seo";
-import { Spinner } from "../../components/misc/spinner";
+
+import { BananaCakePop } from "@/components/images/banana-cake-pop";
+import { Layout } from "@/components/layout";
+import { Link } from "@/components/misc/link";
+import { Intro } from "@/components/misc/page-elements";
+import { SEO } from "@/components/misc/seo";
+import { Spinner } from "@/components/misc/spinner";
 import {
   CompaniesSection,
   MostRecentBcpBlogPostsSection,
-} from "../../components/widgets";
-import ArrowDownIconSvg from "../../images/arrow-down.svg";
-import CircleDownIconSvg from "../../images/circle-down.svg";
+} from "@/components/widgets";
 import {
   FONT_FAMILY_HEADING,
   IsDesktop,
@@ -29,15 +29,17 @@ import {
   IsSmallTablet,
   IsTablet,
   THEME_COLORS,
-} from "../../shared-style";
+} from "@/shared-style";
 
-const DOWNLOAD_STABLE_BASE_URL =
-  "https://download.chillicream.com/bananacakepop/";
+// Icons
+import ArrowDownIconSvg from "@/images/arrow-down.svg";
+import CircleDownIconSvg from "@/images/circle-down.svg";
 
-const DOWNLOAD_INSIDER_BASE_URL =
-  "https://download.chillicream.com/bananacakepopinsider/";
+const DOWNLOAD_BASE_URL = "https://cdn.bananacakepop.com/app/";
 
 const WEB_STABLE_URL = "https://eat.bananacakepop.com";
+
+const WEB_INSIDER_URL = "https://insider.bananacakepop.com";
 
 const TITLE = "Banana Cake Pop / GraphQL IDE";
 
@@ -52,7 +54,9 @@ const BananaCakePopPage: FC = () => {
           <ProductDetails>
             <ProductDetailsHeader>
               <ProductName>Banana Cake Pop</ProductName>
-              <ProductDescription>\\ GraphQL IDE for Devs</ProductDescription>
+              <ProductDescription>
+                /* GraphQL IDE for Devs */
+              </ProductDescription>
             </ProductDetailsHeader>
             <ProductDownload appInfos={appInfos} />
             <ProductDetailsFooter></ProductDetailsFooter>
@@ -89,7 +93,7 @@ const ProductDownload: FC<DownloadHeroProps> = ({ appInfos }) => {
     case "linux":
       return (
         <DownloadButton
-          url={DOWNLOAD_STABLE_BASE_URL + active.appImage.filename}
+          url={DOWNLOAD_BASE_URL + active.appImage.filename}
           text={"Download " + active.appImage.text}
           filename={active.appImage.filename}
           stable={stable}
@@ -100,7 +104,7 @@ const ProductDownload: FC<DownloadHeroProps> = ({ appInfos }) => {
     case "mac":
       return (
         <DownloadButton
-          url={DOWNLOAD_STABLE_BASE_URL + active.universal.filename}
+          url={DOWNLOAD_BASE_URL + active.universal.filename}
           text={"Download " + active.universal.text}
           filename={active.universal.filename}
           stable={stable}
@@ -111,7 +115,7 @@ const ProductDownload: FC<DownloadHeroProps> = ({ appInfos }) => {
     case "windows":
       return (
         <DownloadButton
-          url={DOWNLOAD_STABLE_BASE_URL + active.executable.filename}
+          url={DOWNLOAD_BASE_URL + active.executable.filename}
           text={"Download " + active.executable.text}
           filename={active.executable.filename}
           stable={stable}
@@ -179,10 +183,10 @@ const DownloadButton: FC<DownloadButtonProps> = ({
           <thead>
             <tr>
               <th className="os" scope="col">
-                <span className="sr-only">OS</span>
+                <SrOnly>OS</SrOnly>
               </th>
               <th className="type" scope="col">
-                <span className="sr-only">Type</span>
+                <SrOnly>Type</SrOnly>
               </th>
               <th className="stable" scope="col">
                 Stable
@@ -200,52 +204,34 @@ const DownloadButton: FC<DownloadButtonProps> = ({
               </td>
               <td className="type">Universal</td>
               <td className="stable">
-                <DownloadAppLink
-                  filename={stable.macOS.universal.filename}
-                  baseUrl={DOWNLOAD_STABLE_BASE_URL}
-                />
+                <DownloadAppLink filename={stable.macOS.universal.filename} />
               </td>
               <td className="insider">
-                <DownloadAppLink
-                  filename={insider.macOS.universal.filename}
-                  baseUrl={DOWNLOAD_INSIDER_BASE_URL}
-                />
+                <DownloadAppLink filename={insider.macOS.universal.filename} />
               </td>
             </tr>
             <tr>
               <td className="os" scope="row">
-                <span className="sr-only">macOS x64</span>
+                <SrOnly>macOS x64</SrOnly>
               </td>
               <td className="type">Silicon</td>
               <td className="stable">
-                <DownloadAppLink
-                  filename={stable.macOS.silicon.filename}
-                  baseUrl={DOWNLOAD_STABLE_BASE_URL}
-                />
+                <DownloadAppLink filename={stable.macOS.silicon.filename} />
               </td>
               <td className="insider">
-                <DownloadAppLink
-                  filename={insider.macOS.silicon.filename}
-                  baseUrl={DOWNLOAD_INSIDER_BASE_URL}
-                />
+                <DownloadAppLink filename={insider.macOS.silicon.filename} />
               </td>
             </tr>
             <tr>
               <td className="os" scope="row">
-                <span className="sr-only">macOS x64</span>
+                <SrOnly>macOS x64</SrOnly>
               </td>
               <td className="type">Intel</td>
               <td className="stable">
-                <DownloadAppLink
-                  filename={stable.macOS.intel.filename}
-                  baseUrl={DOWNLOAD_STABLE_BASE_URL}
-                />
+                <DownloadAppLink filename={stable.macOS.intel.filename} />
               </td>
               <td className="insider">
-                <DownloadAppLink
-                  filename={insider.macOS.intel.filename}
-                  baseUrl={DOWNLOAD_INSIDER_BASE_URL}
-                />
+                <DownloadAppLink filename={insider.macOS.intel.filename} />
               </td>
             </tr>
           </tbody>
@@ -259,13 +245,11 @@ const DownloadButton: FC<DownloadButtonProps> = ({
               <td className="stable">
                 <DownloadAppLink
                   filename={stable.windows.executable.filename}
-                  baseUrl={DOWNLOAD_STABLE_BASE_URL}
                 />
               </td>
               <td className="insider">
                 <DownloadAppLink
                   filename={insider.windows.executable.filename}
-                  baseUrl={DOWNLOAD_INSIDER_BASE_URL}
                 />
               </td>
             </tr>
@@ -278,16 +262,10 @@ const DownloadButton: FC<DownloadButtonProps> = ({
               </td>
               <td className="type">AppImage</td>
               <td className="stable">
-                <DownloadAppLink
-                  filename={stable.linux.appImage.filename}
-                  baseUrl={DOWNLOAD_STABLE_BASE_URL}
-                />
+                <DownloadAppLink filename={stable.linux.appImage.filename} />
               </td>
               <td className="insider">
-                <DownloadAppLink
-                  filename={insider.linux.appImage.filename}
-                  baseUrl={DOWNLOAD_INSIDER_BASE_URL}
-                />
+                <DownloadAppLink filename={insider.linux.appImage.filename} />
               </td>
             </tr>
           </tbody>
@@ -296,6 +274,8 @@ const DownloadButton: FC<DownloadButtonProps> = ({
             <tr>
               <td colSpan={4}>
                 <Link to={WEB_STABLE_URL}>Open Web Version</Link>
+                {" | "}
+                <Link to={WEB_INSIDER_URL}>Open Insider Version</Link>
               </td>
             </tr>
           </tfoot>
@@ -307,10 +287,9 @@ const DownloadButton: FC<DownloadButtonProps> = ({
 
 const DownloadAppLink: FC<{
   readonly filename: string;
-  readonly baseUrl: string;
-}> = ({ filename, baseUrl }) => {
+}> = ({ filename }) => {
   return (
-    <DownloadEditionLink to={baseUrl + filename} download={filename}>
+    <DownloadEditionLink to={DOWNLOAD_BASE_URL + filename} download={filename}>
       <DownloadSvg />
     </DownloadEditionLink>
   );
@@ -382,9 +361,9 @@ const ProductDetailsHeader = styled.div`
 
 export const ProductName = styled.h1`
   flex: 0 0 auto;
-  margin-bottom: 0;
   font-weight: normal;
   font-size: 2.222em;
+  text-align: center;
   color: ${THEME_COLORS.textContrast};
 
   ${IsMobile(css`
@@ -394,13 +373,13 @@ export const ProductName = styled.h1`
 
 export const ProductDescription = styled.h2`
   flex: 0 0 auto;
-  margin-bottom: 0;
   font-weight: normal;
-  font-size: 1.625em;
+  font-size: 1.25em;
+  text-align: center;
   color: ${THEME_COLORS.quaternary};
 
   ${IsMobile(css`
-    font-size: 1.125em;
+    font-size: 1em;
   `)}
 `;
 
@@ -678,9 +657,9 @@ type Variant = "latest" | "insider";
 
 async function fetchAppInfo(variant: Variant, os: OS): Promise<LatestAppInfo> {
   const filename = getFilename(variant, os);
-  const baseUrl =
-    variant === "latest" ? DOWNLOAD_STABLE_BASE_URL : DOWNLOAD_INSIDER_BASE_URL;
-  const response = await fetch(baseUrl + filename);
+  const response = await fetch(
+    DOWNLOAD_BASE_URL + filename + "?no-cache=" + new Date().getTime()
+  );
   const text = await response.text();
   const content = parse(text) as LatestAppInfo;
 

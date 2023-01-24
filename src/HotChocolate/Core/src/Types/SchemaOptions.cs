@@ -92,11 +92,6 @@ public class SchemaOptions : IReadOnlySchemaOptions
         DirectiveVisibility.Public;
 
     /// <summary>
-    /// Defines if field inlining is allowed.
-    /// </summary>
-    public bool AllowInlining { get; set; } = true;
-
-    /// <summary>
     /// Defines that the default resolver execution strategy.
     /// </summary>
     public ExecutionStrategy DefaultResolverStrategy { get; set; } =
@@ -127,6 +122,53 @@ public class SchemaOptions : IReadOnlySchemaOptions
     public bool EnsureAllNodesCanBeResolved { get; set; }
 
     /// <summary>
+    /// Defines if flag enums should be inferred as object value nodes
+    /// </summary>
+    /// <example>
+    /// Given the following enum
+    /// <br/>
+    /// <code>
+    /// [Flags]
+    /// public enum Example { First, Second, Third }
+    ///
+    /// public class Query { public Example Loopback(Example input) => input;
+    /// </code>
+    /// <br/>
+    /// The following schema is produced
+    /// <br/>
+    /// <code>
+    /// type Query {
+    ///    loopback(input: ExampleFlagsInput!): ExampleFlags
+    /// }
+    ///
+    /// type ExampleFlags {
+    ///    isFirst: Boolean!
+    ///    isSecond: Boolean!
+    ///    isThird: Boolean!
+    /// }
+    ///
+    /// input ExampleFlagsInput {
+    ///    isFirst: Boolean
+    ///    isSecond: Boolean
+    ///    isThird: Boolean
+    /// }
+    /// </code>
+    /// </example>
+    public bool EnableFlagEnums { get; set; }
+
+    /// <summary>
+    /// Enables the @defer directive.
+    /// Defer and stream both are at the moment preview features.
+    /// </summary>
+    public bool EnableDefer { get; set; }
+
+    /// <summary>
+    /// Enables the @stream directive.
+    /// Defer and stream both are at the moment preview features.
+    /// </summary>
+    public bool EnableStream { get; set; }
+
+    /// <summary>
     /// Creates a mutable options object from a read-only options object.
     /// </summary>
     /// <param name="options">The read-only options object.</param>
@@ -146,7 +188,6 @@ public class SchemaOptions : IReadOnlySchemaOptions
             PreserveSyntaxNodes = options.PreserveSyntaxNodes,
             EnableDirectiveIntrospection = options.EnableDirectiveIntrospection,
             DefaultDirectiveVisibility = options.DefaultDirectiveVisibility,
-            AllowInlining = options.AllowInlining,
             DefaultResolverStrategy = options.DefaultResolverStrategy,
             ValidatePipelineOrder = options.ValidatePipelineOrder,
             StrictRuntimeTypeValidation = options.StrictRuntimeTypeValidation,
@@ -154,7 +195,11 @@ public class SchemaOptions : IReadOnlySchemaOptions
             SortFieldsByName = options.SortFieldsByName,
             DefaultIsOfTypeCheck = options.DefaultIsOfTypeCheck,
             EnableOneOf = options.EnableOneOf,
-            EnsureAllNodesCanBeResolved = options.EnsureAllNodesCanBeResolved
+            EnsureAllNodesCanBeResolved = options.EnsureAllNodesCanBeResolved,
+            EnableFlagEnums = options.EnableFlagEnums,
+            EnableDefer = options.EnableDefer,
+            EnableStream = options.EnableStream,
+            DefaultFieldBindingFlags = options.DefaultFieldBindingFlags
         };
     }
 }

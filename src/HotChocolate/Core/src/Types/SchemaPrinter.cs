@@ -9,6 +9,7 @@ using HotChocolate.Language.Utilities;
 using HotChocolate.Types;
 using HotChocolate.Utilities;
 using HotChocolate.Utilities.Introspection;
+using static HotChocolate.Types.SpecifiedByDirectiveType.Names;
 using static HotChocolate.WellKnownDirectives;
 
 namespace HotChocolate;
@@ -109,6 +110,7 @@ public static class SchemaPrinter
             .OfType<IDefinitionNode>()
             .ToList();
 
+        // ReSharper disable once ConditionIsAlwaysTrueOrFalse
         if (schema.QueryType is not null
             || schema.MutationType is not null
             || schema.SubscriptionType is not null)
@@ -167,6 +169,7 @@ public static class SchemaPrinter
             .ToList();
 
         var locations = directiveType.Locations
+            .AsEnumerable()
             .Select(l => new NameNode(l.MapDirectiveLocation().ToString()))
             .ToList();
 
@@ -385,6 +388,16 @@ public static class SchemaPrinter
             .Select(PrintDirective)
             .ToList();
 
+        if (scalarType.SpecifiedBy is not null)
+        {
+            directives.Add(
+                new DirectiveNode(
+                    SpecifiedBy,
+                    new ArgumentNode(
+                        Url,
+                        new StringValueNode(scalarType.SpecifiedBy.ToString()))));
+        }
+
         return new(
             null,
             new NameNode(scalarType.Name),
@@ -516,8 +529,8 @@ public static class SchemaPrinter
     private static NamedTypeNode PrintNamedType(INamedType namedType)
         => new(null, new NameNode(namedType.Name));
 
-    private static DirectiveNode PrintDirective(IDirective directiveType)
-        => directiveType.ToNode(true);
+    private static DirectiveNode PrintDirective(Directive directive)
+        => directive.AsSyntaxNode(true);
 
     private static StringValueNode PrintDescription(string description)
         => string.IsNullOrEmpty(description) ? null : new StringValueNode(description);

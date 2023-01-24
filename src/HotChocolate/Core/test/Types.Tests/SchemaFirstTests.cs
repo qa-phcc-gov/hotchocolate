@@ -198,39 +198,6 @@ public class SchemaFirstTests
     }
 
     [Fact]
-    public void DirectiveArgumentsAreValidated()
-    {
-        // arrange
-        var sourceText = @"
-                type Query {
-                    foo: String @a(b:1 e:true)
-                }
-
-                directive @a(c:Int d:Int! e:Int) on FIELD_DEFINITION
-            ";
-
-        // act
-        void Action() =>
-            SchemaBuilder.New()
-                .AddDocumentFromString(sourceText)
-                .AddResolver("Query", "foo", "bar")
-                .Create();
-
-        // assert
-        Assert.Collection(
-            Assert.Throws<SchemaException>(Action).Errors,
-            error => Assert.Equal(
-                ErrorCodes.Schema.InvalidArgument,
-                error.Code),
-            error => Assert.Equal(
-                ErrorCodes.Schema.ArgumentValueTypeWrong,
-                error.Code),
-            error => Assert.Equal(
-                ErrorCodes.Schema.NonNullArgument,
-                error.Code));
-    }
-
-    [Fact]
     public void BuiltInScalarsAreRecognized()
     {
         // arrange
@@ -493,7 +460,7 @@ public class SchemaFirstTests
                 .AddDocumentFromString(sdl)
                 .AddQueryType<QueryCodeFirst>()
                 .BindRuntimeType<Person>()
-                .ConfigureSchema(sb => sb.AddSchemaDirective(new CustomDescriptionDirective()))
+                .ConfigureSchema(sb => sb.TryAddSchemaDirective(new CustomDescriptionDirective()))
                 .BuildSchemaAsync();
 
         // assert

@@ -237,6 +237,8 @@ public static class ProjectionObjectFieldDescriptorExtensions
 
         public IOperation Operation => _context.Operation;
 
+        public IOperationResultBuilder OperationResult => _context.OperationResult;
+
         public ISelection Selection { get; }
 
         public IVariableValueCollection Variables => _context.Variables;
@@ -245,6 +247,8 @@ public static class ProjectionObjectFieldDescriptorExtensions
 
         IReadOnlyDictionary<string, object?> IPureResolverContext.ScopedContextData
             => ScopedContextData;
+
+        public IServiceProvider RequestServices => _context.RequestServices;
 
         public string ResponseName => _context.ResponseName;
 
@@ -321,6 +325,10 @@ public static class ProjectionObjectFieldDescriptorExtensions
             IReadOnlyDictionary<string, ArgumentValue> newArgumentValues)
             => _context.ReplaceArguments(newArgumentValues);
 
+        public IReadOnlyDictionary<string, ArgumentValue> ReplaceArguments(
+            ReplaceArguments replace)
+            => _context.ReplaceArguments(replace);
+
         public ArgumentValue ReplaceArgument(string argumentName, ArgumentValue newArgumentValue)
             => _context.ReplaceArgument(argumentName, newArgumentValue);
 
@@ -376,8 +384,6 @@ public static class ProjectionObjectFieldDescriptorExtensions
         public PureFieldDelegate? PureResolver => _nodeField.PureResolver;
 
         public SubscribeResolverDelegate? SubscribeResolver => _nodeField.SubscribeResolver;
-
-        public IReadOnlyList<IDirective> ExecutableDirectives => _nodeField.ExecutableDirectives;
 
         public MemberInfo? Member => _nodeField.Member;
 

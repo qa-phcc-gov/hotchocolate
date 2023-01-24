@@ -1,7 +1,6 @@
-using System;
+using System.Collections.Concurrent;
 using System.Net.WebSockets;
 using System.Reflection;
-using System.Threading.Tasks;
 using HotChocolate.AspNetCore.Tests.Utilities;
 using HotChocolate.StarWars.Models;
 using HotChocolate.Subscriptions;
@@ -9,7 +8,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using StrawberryShake.Transport.WebSockets;
 using StrawberryShake.Transport.WebSockets.Protocols;
-using Xunit;
+using static HotChocolate.StarWars.Types.Subscriptions;
 
 namespace StrawberryShake.CodeGeneration.CSharp.Integration.StarWarsOnReviewSubCompletion
 {
@@ -23,9 +22,7 @@ namespace StrawberryShake.CodeGeneration.CSharp.Integration.StarWarsOnReviewSubC
         public async Task Watch_StarWarsOnReviewSubCompletion_Test()
         {
             // arrange
-            using IWebHost host = TestServerHelper.CreateServer(
-                _ => { },
-                out var port);
+            using var host = TestServerHelper.CreateServer(_ => { }, out var port);
             var topicEventSender = host.Services.GetRequiredService<ITopicEventSender>();
 
             var serviceCollection = new ServiceCollection();
@@ -38,10 +35,10 @@ namespace StrawberryShake.CodeGeneration.CSharp.Integration.StarWarsOnReviewSubC
 
             // act
             IServiceProvider services = serviceCollection.BuildServiceProvider();
-            IStarWarsOnReviewSubCompletionClient client = services.GetRequiredService<IStarWarsOnReviewSubCompletionClient>();
+            var client = services.GetRequiredService<IStarWarsOnReviewSubCompletionClient>();
 
             string? commentary = null;
-            bool completionTriggered = false;
+            var completionTriggered = false;
 
             var sub = client.OnReviewSub.Watch();
             var session = sub.Subscribe(
@@ -52,21 +49,23 @@ namespace StrawberryShake.CodeGeneration.CSharp.Integration.StarWarsOnReviewSubC
 
             // try to send message 10 times
             // make sure the subscription connection is successful
-            for(int times = 0; commentary is null && times < 10; times++)
+            for(var times = 0; commentary is null && times < 10; times++)
             {
-                await topicEventSender.SendAsync(topic, new Review { Stars = 1, Commentary = "Commentary" });
+                await topicEventSender.SendAsync(
+                    $"{OnReview}_{topic}",
+                    new Review { Stars = 1, Commentary = "Commentary" });
                 await Task.Delay(1_000);
             }
 
             // complete the topic of subscription from server
-            await topicEventSender.CompleteAsync(topic);
+            await topicEventSender.CompleteAsync($"{OnReview}_{topic}");
 
             // waiting for completion message sent
-            for (int times = 0; !completionTriggered && times < 10; times++)
+            for (var times = 0; !completionTriggered && times < 10; times++)
             {
                 await Task.Delay(1_000);
             }
-                        
+
             // assert
             Assert.True(commentary is not null && completionTriggered);
 
@@ -77,7 +76,7 @@ namespace StrawberryShake.CodeGeneration.CSharp.Integration.StarWarsOnReviewSubC
         public async Task Watch_StarWarsOnReviewSubCompletionPassively_Test()
         {
             // arrange
-            using IWebHost host = TestServerHelper.CreateServer(
+            using var host = TestServerHelper.CreateServer(
                 _ => { },
                 out var port);
             var topicEventSender = host.Services.GetRequiredService<ITopicEventSender>();
@@ -94,10 +93,10 @@ namespace StrawberryShake.CodeGeneration.CSharp.Integration.StarWarsOnReviewSubC
 
             // act
             IServiceProvider services = serviceCollection.BuildServiceProvider();
-            IStarWarsOnReviewSubCompletionClient client = services.GetRequiredService<IStarWarsOnReviewSubCompletionClient>();
+            var client = services.GetRequiredService<IStarWarsOnReviewSubCompletionClient>();
 
             string? commentary = null;
-            bool completionTriggered = false;
+            var completionTriggered = false;
 
             var sub = client.OnReviewSub.Watch();
             var session = sub.Subscribe(
@@ -108,9 +107,11 @@ namespace StrawberryShake.CodeGeneration.CSharp.Integration.StarWarsOnReviewSubC
 
             // try to send message 10 times
             // make sure the subscription connection is successful
-            for (int times = 0; commentary is null && times < 10; times++)
+            for (var times = 0; commentary is null && times < 10; times++)
             {
-                await topicEventSender.SendAsync(topic, new Review { Stars = 1, Commentary = "Commentary" });
+                await topicEventSender.SendAsync(
+                    $"{OnReview}_{topic}",
+                    new Review { Stars = 1, Commentary = "Commentary" });
                 await Task.Delay(1_000);
             }
 
@@ -121,7 +122,7 @@ namespace StrawberryShake.CodeGeneration.CSharp.Integration.StarWarsOnReviewSubC
             //await host.StopAsync();
 
             // waiting for completion message sent
-            for (int times = 0; !completionTriggered && times < 10; times++)
+            for (var times = 0; !completionTriggered && times < 10; times++)
             {
                 await Task.Delay(1_000);
             }
@@ -141,10 +142,14 @@ namespace StrawberryShake.CodeGeneration.CSharp.Integration.StarWarsOnReviewSubC
         private readonly Type _sessionPoolType;
         private readonly FieldInfo _sessionsField;
 
-        private readonly FieldInfo _socketOperationsDictionaryField = typeof(Session).GetField("_operations", _bindingFlags)!;
-        private readonly FieldInfo _socketOperationManagerField = typeof(SocketOperation).GetField("_manager", _bindingFlags)!;
-        private readonly FieldInfo _socketProtocolField = typeof(Session)!.GetField("_socketProtocol", _bindingFlags)!;
-        private readonly FieldInfo _protocolReceiverField = typeof(GraphQLWebSocketProtocol).GetField("_receiver", _bindingFlags)!;
+        private readonly FieldInfo _socketOperationsDictionaryField =
+            typeof(Session).GetField("_operations", _bindingFlags)!;
+        private readonly FieldInfo _socketOperationManagerField =
+            typeof(SocketOperation).GetField("_manager", _bindingFlags)!;
+        private readonly FieldInfo _socketProtocolField =
+            typeof(Session).GetField("_socketProtocol", _bindingFlags)!;
+        private readonly FieldInfo _protocolReceiverField =
+            typeof(GraphQLWebSocketProtocol).GetField("_receiver", _bindingFlags)!;
 
         private Type? _sessionInfoType;
         private PropertyInfo? _sessionProperty;
@@ -160,7 +165,8 @@ namespace StrawberryShake.CodeGeneration.CSharp.Integration.StarWarsOnReviewSubC
 
         public void AbortSocket()
         {
-            var sessionInfos = (_sessionsField!.GetValue(_sessionPool) as System.Collections.IDictionary)!.Values;
+            var sessionInfos = (_sessionsField!.GetValue(_sessionPool)
+                as System.Collections.IDictionary)!.Values;
 
             foreach (var sessionInfo in sessionInfos)
             {
@@ -168,12 +174,14 @@ namespace StrawberryShake.CodeGeneration.CSharp.Integration.StarWarsOnReviewSubC
                 _sessionProperty ??= _sessionInfoType.GetProperty("Session")!;
                 var session = _sessionProperty.GetValue(sessionInfo) as Session;
                 var socketOperations = _socketOperationsDictionaryField
-                    .GetValue(session) as System.Collections.Concurrent.ConcurrentDictionary<string, SocketOperation>;
+                    .GetValue(session) as ConcurrentDictionary<string, SocketOperation>;
 
                 foreach (var operation in socketOperations!)
                 {
-                    var operationsession = _socketOperationManagerField.GetValue(operation.Value) as Session;
-                    var protocol = _socketProtocolField.GetValue(operationsession) as GraphQLWebSocketProtocol;
+                    var operationSession = _socketOperationManagerField.GetValue(operation.Value)
+                        as Session;
+                    var protocol = _socketProtocolField.GetValue(operationSession)
+                        as GraphQLWebSocketProtocol;
 
                     var receiver = _protocolReceiverField.GetValue(protocol)!;
 
@@ -183,7 +191,8 @@ namespace StrawberryShake.CodeGeneration.CSharp.Integration.StarWarsOnReviewSubC
 
                     if (client!.IsClosed is false && client is WebSocketClient webSocketClient)
                     {
-                        var socket = typeof(WebSocketClient).GetField("_socket", _bindingFlags)!.GetValue(webSocketClient) as ClientWebSocket;
+                        var socket = typeof(WebSocketClient).GetField("_socket", _bindingFlags)!
+                            .GetValue(webSocketClient) as ClientWebSocket;
                         socket!.Abort();
                     }
                 }

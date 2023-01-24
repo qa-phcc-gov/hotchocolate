@@ -1,10 +1,11 @@
 import { createGlobalStyle } from "styled-components";
+
 import {
   DEFAULT_THEME_COLORS,
   FONT_FAMILY,
   FONT_FAMILY_HEADING,
   THEME_COLORS,
-} from "../../shared-style";
+} from "@/shared-style";
 
 export const GlobalStyle = createGlobalStyle`
   :root {
@@ -18,31 +19,17 @@ export const GlobalStyle = createGlobalStyle`
     height: 100vh;
     overflow: hidden;
     font-family: ${FONT_FAMILY};
-    -ms-text-size-adjust: 100%;
     -webkit-text-size-adjust: 100%;
   }
 
   body {
     margin: 0;
-    height: 100vh;
     overflow: hidden;
     font-size: 18px;
     line-height: 30px;
     color: ${THEME_COLORS.text};
-    scroll-behavior: smooth;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-
-    > div:first-child {
-      display: block;
-      height: 100vh;
-
-      > div {
-        display: flex;
-        flex-direction: column;
-        height: 100vh;
-      }
-    }
   }
 
   * {
@@ -243,15 +230,5 @@ export const GlobalStyle = createGlobalStyle`
   h5:hover a.anchor,
   h6:hover a.anchor {
     visibility: visible;
-  }
-
-  .sr-only:not(:focus):not(:active) {
-    clip: rect(0 0 0 0);
-    clip-path: inset(50%);
-    height: 1px;
-    overflow: hidden;
-    position: absolute;
-    white-space: nowrap;
-    width: 1px;
   }
 `;

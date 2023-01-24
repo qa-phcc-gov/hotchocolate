@@ -7,6 +7,15 @@ namespace CookieCrumble;
 
 public static class SnapshotExtensions
 {
+    public static void MatchInlineSnapshot(
+        this object? value,
+        string snapshot,
+        ISnapshotValueFormatter? formatter = null)
+        => Snapshot.Create().Add(value, formatter: formatter).MatchInline(snapshot);
+
+    public static void MatchSnapshot(this Snapshot value)
+        => value.Match();
+
     public static void MatchSnapshot(
         this object? value,
         object? postFix = null,
@@ -51,7 +60,11 @@ public static class SnapshotExtensions
             return snapshot;
         }
 
-        snapshot.Add(result.ToJson(), string.IsNullOrEmpty(name) ? "Result:" : $"{name} Result:");
+        snapshot.Add(
+            result.ToJson(),
+            string.IsNullOrEmpty(name)
+                ? "Result:"
+                : $"{name} Result:");
         snapshot.SetPostFix(TestEnvironment.TargetFramework);
 
         if (result.ContextData.TryGetValue("query", out var queryResult) &&
@@ -60,7 +73,9 @@ public static class SnapshotExtensions
         {
             snapshot.Add(
                 queryString,
-                string.IsNullOrEmpty(name) ? "Query:" : $"{name} Query:",
+                string.IsNullOrEmpty(name)
+                    ? "Query:"
+                    : $"{name} Query:",
                 SnapshotValueFormatters.PlainText);
         }
 
@@ -68,7 +83,9 @@ public static class SnapshotExtensions
         {
             snapshot.Add(
                 sql,
-                string.IsNullOrEmpty(name) ? "SQL:" : $"{name} SQL:",
+                string.IsNullOrEmpty(name)
+                    ? "SQL:"
+                    : $"{name} SQL:",
                 SnapshotValueFormatters.PlainText);
         }
 
@@ -76,7 +93,9 @@ public static class SnapshotExtensions
         {
             snapshot.Add(
                 expression,
-                string.IsNullOrEmpty(name) ? "Expression:" : $"{name} Expression:",
+                string.IsNullOrEmpty(name)
+                    ? "Expression:"
+                    : $"{name} Expression:",
                 SnapshotValueFormatters.PlainText);
         }
 

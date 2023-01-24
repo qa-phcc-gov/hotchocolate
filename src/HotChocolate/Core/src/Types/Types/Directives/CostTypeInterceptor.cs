@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using HotChocolate.Configuration;
 using HotChocolate.Language;
@@ -27,8 +28,7 @@ internal class CostTypeInterceptor : TypeInterceptor
 
     public override void OnBeforeRegisterDependencies(
         ITypeDiscoveryContext discoveryContext,
-        DefinitionBase? definition,
-        IDictionary<string, object?> contextData)
+        DefinitionBase definition)
     {
         EnsurePagingSettingsAreLoaded(discoveryContext.DescriptorContext);
         EnsureCostSettingsAreLoaded(discoveryContext.DescriptorContext);
@@ -51,14 +51,13 @@ internal class CostTypeInterceptor : TypeInterceptor
 
             discoveryContext.Dependencies.Add(new(
                 TypeReference.Create(directive),
-                TypeDependencyKind.Completed));
+                TypeDependencyFulfilled.Completed));
         }
     }
 
     public override void OnBeforeCompleteType(
         ITypeCompletionContext completionContext,
-        DefinitionBase? definition,
-        IDictionary<string, object?> contextData)
+        DefinitionBase definition)
     {
         if (!_costSettings.Enable || !_costSettings.ApplyDefaults)
         {
@@ -124,13 +123,13 @@ internal class CostTypeInterceptor : TypeInterceptor
 
     private static bool IsCostDirective(DirectiveDefinition directive)
     {
-        if (directive.Reference is NameDirectiveReference { Name: "cost" })
+        if (directive.Type is NameDirectiveReference { Name: "cost" })
         {
             return true;
         }
 
-        if (directive.Reference is ClrTypeDirectiveReference { ClrType: { } type } &&
-            type == typeof(CostDirective))
+        if (directive.Type is ExtendedTypeDirectiveReference { Type.Type: { } runtimeType } &&
+            runtimeType == typeof(CostDirective))
         {
             return true;
         }
@@ -141,7 +140,7 @@ internal class CostTypeInterceptor : TypeInterceptor
     /// <summary>
     /// Defines if a resolver is possible fetching data and causing higher impact on the system.
     /// </summary>
-    private static bool IsDataResolver(ObjectFieldDefinition field)
+    internal static bool IsDataResolver(ObjectFieldDefinition field)
     {
         if (field.PureResolver is not null && field.MiddlewareDefinitions.Count == 0)
         {

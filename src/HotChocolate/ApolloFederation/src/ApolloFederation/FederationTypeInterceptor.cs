@@ -37,12 +37,9 @@ internal sealed class FederationTypeInterceptor : TypeInterceptor
                 BindingFlags.Static | BindingFlags.Public)!;
     private readonly List<ObjectType> _entityTypes = new();
 
-    public override bool TriggerAggregations => true;
-
     public override void OnAfterInitialize(
         ITypeDiscoveryContext discoveryContext,
-        DefinitionBase? definition,
-        IDictionary<string, object?> contextData)
+        DefinitionBase definition)
     {
         if (discoveryContext.Type is ObjectType objectType &&
             definition is ObjectTypeDefinition objectTypeDefinition)
@@ -63,8 +60,7 @@ internal sealed class FederationTypeInterceptor : TypeInterceptor
         }
     }
 
-    public override void OnTypesInitialized(
-        IReadOnlyCollection<ITypeDiscoveryContext> discoveryContexts)
+    public override void OnTypesInitialized()
     {
         if (_entityTypes.Count == 0)
         {
@@ -74,8 +70,7 @@ internal sealed class FederationTypeInterceptor : TypeInterceptor
 
     public override void OnBeforeCompleteType(
         ITypeCompletionContext completionContext,
-        DefinitionBase? definition,
-        IDictionary<string, object?> contextData)
+        DefinitionBase definition)
     {
         AddMemberTypesToTheEntityUnionType(
             completionContext,
@@ -88,8 +83,7 @@ internal sealed class FederationTypeInterceptor : TypeInterceptor
 
     public override void OnAfterCompleteType(
         ITypeCompletionContext completionContext,
-        DefinitionBase? definition,
-        IDictionary<string, object?> contextData)
+        DefinitionBase definition)
     {
         if (completionContext.Type is ObjectType type &&
             definition is ObjectTypeDefinition typeDef)
@@ -210,7 +204,7 @@ internal sealed class FederationTypeInterceptor : TypeInterceptor
         ObjectTypeDefinition objectTypeDefinition)
     {
         if (objectTypeDefinition.Directives.Any(
-            d => d.Reference is NameDirectiveReference { Name: WellKnownTypeNames.Key }) ||
+            d => d.Value is DirectiveNode { Name.Value: WellKnownTypeNames.Key }) ||
             objectTypeDefinition.Fields.Any(f => f.ContextData.ContainsKey(WellKnownTypeNames.Key)))
         {
             _entityTypes.Add(objectType);
@@ -251,10 +245,10 @@ internal sealed class FederationTypeInterceptor : TypeInterceptor
             {
                 discoveryContext.Dependencies.Add(
                     new TypeDependency(
-                        directiveDefinition.TypeReference,
-                        TypeDependencyKind.Completed));
+                        directiveDefinition.Type,
+                        TypeDependencyFulfilled.Completed));
 
-                discoveryContext.RegisterDependency(directiveDefinition.Reference);
+                discoveryContext.Dependencies.Add(new(directiveDefinition.Type));
             }
 
             // since this type has now a key directive we also need to add this type to

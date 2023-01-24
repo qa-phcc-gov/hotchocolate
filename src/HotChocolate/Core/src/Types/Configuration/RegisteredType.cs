@@ -20,7 +20,7 @@ internal sealed partial class RegisteredType : IHasRuntimeType
         TypeRegistry typeRegistry,
         TypeLookup typeLookup,
         IDescriptorContext descriptorContext,
-        ITypeInterceptor typeInterceptor,
+        TypeInterceptor typeInterceptor,
         string? scope)
     {
         Type = type;
@@ -55,7 +55,7 @@ internal sealed partial class RegisteredType : IHasRuntimeType
             ? hasClrType.RuntimeType
             : typeof(object);
 
-    public List<ITypeReference> References { get; } = new();
+    public List<TypeReference> References { get; } = new();
 
     public List<TypeDependency> Dependencies { get; } = new();
 
